@@ -123,7 +123,9 @@
                 </div>
               </div>
 
-              <p v-if="timeCalc !== ''" class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">Timetaken to drop {{timetype}} is {{ timeCalc }}</p>
+              <p v-if="timeCalc !== ''"
+                class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">Timetaken to drop
+                {{ timetype }} is {{ timeCalc }}</p>
 
               <div class="pt-4">
                 <button type="submit"
@@ -162,28 +164,34 @@ export default {
       return this.avgCurrent
     },
 
+    formatMinSecs(e) {
+      const h = Math.floor(e / 3600).toString().padStart(2, '0'),
+        m = Math.floor(e % 3600 / 60).toString().padStart(2, '0'),
+        s = Math.floor(e % 60).toString().padStart(2, '0');
+
+      return h + ':' + m + ':' + s;
+    },
+
     kwhTimeDrop() {
       let oneKwhTime = 1000 / (this.voltage * this.avgCurrent * Math.sqrt(3))
       this.timeCalc = oneKwhTime
-      console.log(this.timeCalc)
       return this.timeCalc
     },
 
     whTimeDrop() {
       let tenWhTime = 10 / (this.voltage * this.avgCurrent * Math.sqrt(3))
       this.timeCalc = tenWhTime
-      console.log(this.timeCalc)
       return this.timeCalc
     },
 
     chooseTimeDrop() {
-      if (this.timetype === 'kwhdrop') {
+      if (this.timetype === '1kWH') {
         this.kwhTimeDrop()
       } else {
         this.whTimeDrop()
       }
     }
-  },
+  }
 }
 </script>
 <style lang="css">
