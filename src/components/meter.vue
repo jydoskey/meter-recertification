@@ -123,9 +123,9 @@
                 </div>
               </div>
 
-              <p v-if="timeCalc !== ''"
+              <p v-if="timeCalc !== 0"
                 class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">Timetaken to drop
-                {{ timetype }} is {{ timeCalc }}</p>
+                {{ timetype }} is {{ secondsToMinSecPadded(timeCalc) }}</p>
 
               <div class="pt-4">
                 <button type="submit"
@@ -144,10 +144,10 @@
 export default {
   data() {
     return {
-      timeCalc: '',
+      timeCalc: 0,
       redphase: '',
       bluephase: '',
-      avgCurrent: '',
+      avgCurrent: 0,
       yellowphase: '',
       voltage: 415,
       timetype: ''
@@ -161,15 +161,24 @@ export default {
       } else {
         this.avgCurrent = 0
       }
-      return this.avgCurrent
+      return this.avgCurrent.toFixed(6)
     },
 
-    formatMinSecs(e) {
-      const h = Math.floor(e / 3600).toString().padStart(2, '0'),
-        m = Math.floor(e % 3600 / 60).toString().padStart(2, '0'),
-        s = Math.floor(e % 60).toString().padStart(2, '0');
+    secondsToMinSecPadded(duration) {
+      const hrs = ~~(duration / 3600);
+      const mins = ~~((duration % 3600) / 60);
+      const secs = ~~duration % 60;
 
-      return h + ':' + m + ':' + s;
+      let ret = "";
+
+      if (hrs > 0) {
+        ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+      }
+
+      ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+      ret += "" + secs;
+
+      return ret;
     },
 
     kwhTimeDrop() {
