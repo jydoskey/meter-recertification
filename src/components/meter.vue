@@ -23,7 +23,7 @@
         </div>
         <div class="flex min-h-full flex-1 flex-col justify-center px-6 lg:px-8">
           <div class="mt-6 sm:mx-auto sm:w-full sm:max-w-sm">
-            <form class="space-y-6">
+            <form class="space-y-6" @submit.prevent>
 
               <div>
                 <div class="flex items-center">
@@ -85,7 +85,7 @@
                 <div class="inline-flex items-center">
                   <label class="relative flex items-center p-1 rounded-full cursor-pointer">
                     <input name="1kWH" value="1kWH" id="kwhdrop" type="radio" v-model="timetype"
-                      @click="chooseTimeDrop()" required
+                      @change="chooseTimeDrop()" required
                       class="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-full border border-sky-gray-200 text-gray-900 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-sky-900 checked:before:bg-sky-900 hover:before:opacity-10" />
                     <span
                       class="absolute text-gray-900 transition-opacity opacity-0 pointer-events-none top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 peer-checked:opacity-100">
@@ -105,7 +105,7 @@
                 <div class="inline-flex items-center">
                   <label class="relative flex items-center p-1 rounded-full cursor-pointer">
                     <input name="10WH" value="10WH" id="whdrop" type="radio" v-model="timetype"
-                      @click="chooseTimeDrop()" required
+                      @change="chooseTimeDrop()" required
                       class="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-full border border-sky-gray-200 text-gray-900 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-sky-900 checked:before:bg-sky-900 hover:before:opacity-10" />
                     <span
                       class="absolute text-gray-900 transition-opacity opacity-0 pointer-events-none top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 peer-checked:opacity-100">
@@ -124,13 +124,18 @@
               </div>
 
               <p v-if="timeCalc !== 0"
-                class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">Timetaken to drop
-                {{ timetype }} is {{ secondsToMinSecPadded(timeCalc) }}</p>
+                class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">
+                Time taken to drop {{ timetype }} is {{ secondsToMinSecPadded(timeCalc) }}
+              </p>
+              <p v-if="countdownTime > 0"
+                class="block font-sans text-base antialiased font-bold leading-normal text-gray-700">
+                Countdown: {{ secondsToMinSecPadded(countdownTime) }}
+              </p>
 
               <div class="pt-4">
-                <button type="submit"
-                  class="flex w-full justify-center rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">Calculate
-                  Time Taken</button>
+                <button type="button" @click="startCountdown()"
+                  class="flex w-full justify-center rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">Start
+                  Countdown</button>
               </div>
             </form>
           </div>
@@ -150,14 +155,16 @@ export default {
       avgCurrent: 0,
       yellowphase: '',
       voltage: 415,
-      timetype: ''
+      timetype: '',
+      countdownTime: 0,
+      countdownInterval: null,
     }
   },
 
   methods: {
     avgCurrentCalc() {
       if ((this.redphase && this.yellowphase && this.bluephase) !== 0) {
-        this.avgCurrent = (this.redphase + this.yellowphase + this.bluephase) / 3
+        this.avgCurrent = (parseFloat(this.redphase) + parseFloat(this.yellowphase) + parseFloat(this.bluephase)) / 3
       } else {
         this.avgCurrent = 0
       }
@@ -184,22 +191,47 @@ export default {
     kwhTimeDrop() {
       let oneKwhTime = 1000 / (this.voltage * this.avgCurrent * Math.sqrt(3))
       this.timeCalc = oneKwhTime
-      return this.timeCalc
     },
 
     whTimeDrop() {
       let tenWhTime = 10 / (this.voltage * this.avgCurrent * Math.sqrt(3))
       this.timeCalc = tenWhTime
-      return this.timeCalc
+    },
+
+    startCountdown() {
+      clearInterval(this.countdownInterval);
+      this.countdownTime = this.timeCalc;
+      this.countdownInterval = setInterval(() => {
+        if (this.countdownTime > 0) {
+          this.countdownTime--;
+        } else {
+          clearInterval(this.countdownInterval);
+          this.clearForm();
+        }
+      }, 1000);
+    },
+
+    clearForm() {
+      this.redphase = '';
+      this.yellowphase = '';
+      this.bluephase = '';
+      this.timetype = '';
+      this.timeCalc = 0;
     },
 
     chooseTimeDrop() {
       if (this.timetype === '1kWH') {
-        this.kwhTimeDrop()
-      } else {
-        this.whTimeDrop()
+        return this.kwhTimeDrop();
+      } if (this.timetype === '10WH') {
+        return this.whTimeDrop();
       }
     }
+  },
+
+  watch: {
+    redphase() { this.chooseTimeDrop(); },
+    yellowphase() { this.chooseTimeDrop(); },
+    bluephase() { this.chooseTimeDrop(); },
   }
 }
 </script>
