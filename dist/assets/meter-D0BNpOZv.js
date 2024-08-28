@@ -1,1 +1,0 @@
-import{_ as e,c as t,o,a as s}from"./index-dvCVLkC0.js";const c={},a=s("p",{class:"text-red-500 font-bold text-3xl"},"Hello",-1),n=[a];function r(_,l,d,p,f,i){return o(),t("div",null,n)}const m=e(c,[["render",r]]);export{m as default};
