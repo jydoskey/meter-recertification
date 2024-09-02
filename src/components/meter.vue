@@ -125,11 +125,11 @@
 
               <p v-if="timeCalc !== 0"
                 class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">
-                Time taken to drop {{ timetype }} is {{ secondsToMinSecPadded(timeCalc) }}
+                Time taken to drop {{ timetype }} is {{ hoursToMinSec(timeCalc) }}
               </p>
               <p v-if="countdownTime > 0"
                 class="block font-sans text-base antialiased font-bold leading-normal text-gray-700">
-                Countdown: {{ secondsToMinSecPadded(countdownTime) }}
+                Countdown: {{ hoursToMinSec(countdownTime) }}
               </p>
 
               <div class="pt-4">
@@ -149,7 +149,7 @@
 export default {
   data() {
     return {
-      timeCalc: 0,
+      timeCalc: 0,         
       redphase: '',
       bluephase: '',
       avgCurrent: 0,
@@ -163,44 +163,38 @@ export default {
 
   methods: {
     avgCurrentCalc() {
-      if ((this.redphase && this.yellowphase && this.bluephase) !== 0) {
-        this.avgCurrent = (parseFloat(this.redphase) + parseFloat(this.yellowphase) + parseFloat(this.bluephase)) / 3
+      if (this.redphase && this.yellowphase && this.bluephase) {
+        this.avgCurrent = (parseFloat(this.redphase) + parseFloat(this.yellowphase) + parseFloat(this.bluephase)) / 3;
       } else {
-        this.avgCurrent = 0
+        this.avgCurrent = 0;
       }
-      return this.avgCurrent.toFixed(6)
+      return this.avgCurrent.toFixed(6);
     },
 
-    secondsToMinSecPadded(duration) {
-      const hrs = ~~(duration / 3600);
-      const mins = ~~((duration % 3600) / 60);
-      const secs = ~~duration % 60;
+    hoursToMinSec(duration) {
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
 
-      let ret = "";
+      const formattedMinutes = String(minutes).padStart(2, '0');
+      const formattedSeconds = Math.round(String(seconds).padStart(2, '0'));
 
-      if (hrs > 0) {
-        ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
-      }
-
-      ret += "" + mins + ":" + (secs < 10 ? "0" : "");
-      ret += "" + secs;
-
-      return ret;
+      return `${formattedMinutes}:${formattedSeconds}`;
     },
 
     kwhTimeDrop() {
-      let oneKwhTime = 1000 / (this.voltage * this.avgCurrent * Math.sqrt(3))
-      this.timeCalc = oneKwhTime
+      let oneKwhTime = 1000 / (this.voltage * this.avgCurrent * Math.sqrt(3));
+      this.timeCalc = oneKwhTime * 3600;
     },
 
     whTimeDrop() {
-      let tenWhTime = 10 / (this.voltage * this.avgCurrent * Math.sqrt(3))
-      this.timeCalc = tenWhTime
+      let tenWhTime = 10 / (this.voltage * this.avgCurrent * Math.sqrt(3));
+      this.timeCalc = tenWhTime * 3600;
     },
 
     startCountdown() {
       clearInterval(this.countdownInterval);
       this.countdownTime = this.timeCalc;
+
       this.countdownInterval = setInterval(() => {
         if (this.countdownTime > 0) {
           this.countdownTime--;
@@ -217,13 +211,14 @@ export default {
       this.bluephase = '';
       this.timetype = '';
       this.timeCalc = 0;
+      this.countdownTime = 0;
     },
 
     chooseTimeDrop() {
       if (this.timetype === '1kWH') {
-        return this.kwhTimeDrop();
-      } if (this.timetype === '10WH') {
-        return this.whTimeDrop();
+        this.kwhTimeDrop();
+      } else if (this.timetype === '10WH') {
+        this.whTimeDrop();
       }
     }
   },
