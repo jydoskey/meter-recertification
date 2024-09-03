@@ -123,11 +123,11 @@
                 </div>
               </div>
 
-              <p v-if="timeCalc !== 0"
+              <p v-if="timeCalc !== 0 && !isCountingDown"
                 class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">
                 Time taken to drop {{ timetype }} is {{ hoursToMinSec(timeCalc) }}
               </p>
-              <p v-if="countdownTime > 0"
+              <p v-if="isCountingDown"
                 class="block font-sans text-base antialiased font-bold leading-normal text-gray-700">
                 Countdown: {{ hoursToMinSec(countdownTime) }}
               </p>
@@ -149,7 +149,7 @@
 export default {
   data() {
     return {
-      timeCalc: 0,         
+      timeCalc: 0,
       redphase: '',
       bluephase: '',
       avgCurrent: 0,
@@ -158,16 +158,17 @@ export default {
       timetype: '',
       countdownTime: 0,
       countdownInterval: null,
+      isCountingDown: false,
     }
   },
 
   methods: {
     avgCurrentCalc() {
-      if (this.redphase && this.yellowphase && this.bluephase) {
-        this.avgCurrent = (parseFloat(this.redphase) + parseFloat(this.yellowphase) + parseFloat(this.bluephase)) / 3;
-      } else {
-        this.avgCurrent = 0;
-      }
+      const red = parseFloat(this.redphase) || 0;
+      const yellow = parseFloat(this.yellowphase) || 0;
+      const blue = parseFloat(this.bluephase) || 0;
+
+      this.avgCurrent = (red + yellow + blue) / 3;
       return this.avgCurrent.toFixed(6);
     },
 
@@ -192,17 +193,20 @@ export default {
     },
 
     startCountdown() {
-      clearInterval(this.countdownInterval);
-      this.countdownTime = this.timeCalc;
+      if (this.timeCalc > 0) {
+        clearInterval(this.countdownInterval);
+        this.countdownTime = this.timeCalc;
+        this.isCountingDown = true;
 
-      this.countdownInterval = setInterval(() => {
-        if (this.countdownTime > 0) {
-          this.countdownTime--;
-        } else {
-          clearInterval(this.countdownInterval);
-          this.clearForm();
-        }
-      }, 1000);
+        this.countdownInterval = setInterval(() => {
+          if (this.countdownTime > 0) {
+            this.countdownTime--;
+          } else {
+            clearInterval(this.countdownInterval);
+            this.isCountingDown = false;
+          }
+        }, 1000);
+      }
     },
 
     clearForm() {
@@ -212,13 +216,19 @@ export default {
       this.timetype = '';
       this.timeCalc = 0;
       this.countdownTime = 0;
+      this.isCountingDown = false;
     },
 
     chooseTimeDrop() {
-      if (this.timetype === '1kWH') {
-        this.kwhTimeDrop();
-      } else if (this.timetype === '10WH') {
-        this.whTimeDrop();
+      if (this.avgCurrentCalc() > 0 && this.timetype) {
+        if (this.timetype === '1kWH') {
+          this.kwhTimeDrop();
+        } else if (this.timetype === '10WH') {
+          this.whTimeDrop();
+        }
+        this.isCountingDown = false;
+      } else {
+        this.timeCalc = 0;
       }
     }
   },
@@ -227,6 +237,7 @@ export default {
     redphase() { this.chooseTimeDrop(); },
     yellowphase() { this.chooseTimeDrop(); },
     bluephase() { this.chooseTimeDrop(); },
+    timetype() { this.chooseTimeDrop(); },
   }
 }
 </script>
