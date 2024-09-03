@@ -159,6 +159,7 @@ export default {
       countdownTime: 0,
       countdownInterval: null,
       isCountingDown: false,
+      countdownDisplay: '00:00',
     }
   },
 
@@ -174,10 +175,10 @@ export default {
 
     hoursToMinSec(duration) {
       const minutes = Math.floor(duration / 60);
-      const seconds = duration % 60;
+      const seconds = Math.floor(duration % 60);
 
       const formattedMinutes = String(minutes).padStart(2, '0');
-      const formattedSeconds = Math.round(String(seconds).padStart(2, '0'));
+      const formattedSeconds = String(seconds).padStart(2, '0');
 
       return `${formattedMinutes}:${formattedSeconds}`;
     },
@@ -195,18 +196,29 @@ export default {
     startCountdown() {
       if (this.timeCalc > 0) {
         clearInterval(this.countdownInterval);
-        this.countdownTime = this.timeCalc;
+        this.countdownTime = Math.floor(this.timeCalc);
         this.isCountingDown = true;
+        this.updateCountdownDisplay();
 
         this.countdownInterval = setInterval(() => {
           if (this.countdownTime > 0) {
             this.countdownTime--;
+            this.updateCountdownDisplay();
           } else {
-            clearInterval(this.countdownInterval);
-            this.isCountingDown = false;
+            this.stopCountdown();
           }
         }, 1000);
       }
+    },
+
+    stopCountdown() {
+      clearInterval(this.countdownInterval);
+      this.isCountingDown = false;
+      this.countdownDisplay = '00:00';
+    },
+
+    updateCountdownDisplay() {
+      this.countdownDisplay = this.hoursToMinSec(this.countdownTime);
     },
 
     clearForm() {
@@ -217,6 +229,7 @@ export default {
       this.timeCalc = 0;
       this.countdownTime = 0;
       this.isCountingDown = false;
+      this.countdownDisplay = '00:00';
     },
 
     chooseTimeDrop() {
